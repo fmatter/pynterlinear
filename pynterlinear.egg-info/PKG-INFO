@@ -1,0 +1,33 @@
+Metadata-Version: 2.1
+Name: pynterlinear
+Version: 0.0.1
+Summary: Converts interlinear text from any source to LaTeX and Microsoft Word
+Home-page: -
+Author: Florian Matter
+Author-email: florianmatter@gmail.com
+License: UNKNOWN
+Description: # pynterlinear
+        
+        This is a python package which provides several functionalities for handling glossed interlinear text.
+        It provides three main functions.
+        
+        ## `convert_to_expex`
+        This function takes a dictionary as an argument and returns a LaTeX 
+        The dictionary has the following required keys:
+        * `id`
+        * `obj`
+        * `gloss`
+        * `trans`
+        
+        optional arguments:
+        
+        * `language`
+        * `surface`
+        * `source`
+        
+        if `for_beamer` is true, then a key `glottocode` is also required.
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
