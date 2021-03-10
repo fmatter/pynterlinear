@@ -4,6 +4,7 @@
 2	second person
 3	third person
 A	agentive transitive argument
+atten	attenuative
 abl	ablative
 abort	abortive
 abs	absolutive
@@ -42,7 +43,7 @@ cap	(cap-)ability
 caus	causative
 cert	certainty
 cess	cessative
-circ	circumfix
+circ	circumstantial
 cisl	cislocative
 cit	citation form
 clf	classifier
@@ -112,6 +113,7 @@ hsy	hearsay/indirect evidentiality
 hum	human
 ideo	ideophone
 ill	illative
+adm	admonitive
 imp	imperative
 imprs	impersonal
 inan	inanimate
@@ -212,7 +214,8 @@ rel	relative
 rem	remote past
 rep	repetitive
 res	resultative
-resum	resumptative
+resum	resumptive
+inal	inalienable
 S	intransitive argument
 sap	speech act participant
 sbj	subject

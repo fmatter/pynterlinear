@@ -154,7 +154,7 @@ def get_expex_code(input):
 #This function takes a list of dictionaries and produces ExPex code
 #Use for_beamer if you want to insert a \glottolink command
 #For this, a key glottocode is needed in the example hash.
-def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NEWTAG", latex_labels=True, multicols=True):
+def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NEWTAG", latex_labels=True, multicols=False, no_surf=False):
     #See what languages and sources we're dealing with and whether it makes
     #sense to just print them once
     languages = []
@@ -196,7 +196,7 @@ def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NE
     #start, after \(p)ex
     if same_language and "language" in examples[0].keys():
         #Print \glottolink if for_beamer is set to True
-        if for_beamer:
+        if for_beamer and 0 == 1:
             language_string = "\\glottolink{%s}{%s}" % (
                 examples[0]["glottocode"],
                 examples[0]["language"]
@@ -278,7 +278,7 @@ def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NE
         #after the respective \a
         if not same_language:
             #Again with the glottolink string
-            if for_beamer:
+            if for_beamer and 0==1:
                 language_string = "\\glottolink{%s}{%s}" % (example["glottocode"], example["language"])
             else:
                 language_string = example["language"]
@@ -298,7 +298,7 @@ def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NE
         part_text += "\n"
         #If there is a surface form, we add it, otherwise it's just an empty
         #string
-        if "surface" not in example or example["surface"] == example["obj"]:# or "-" in example["surface"]:
+        if "surface" not in example or example["surface"] == example["obj"] or no_surf:# or "-" in example["surface"]:
             surface_string = ""
         else:
             if "[" in example["surface"] and "]" in example["surface"]:
