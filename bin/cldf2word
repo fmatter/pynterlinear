@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+
+import sys
+from pynterlinear import cldf2word
+
+if len(sys.argv) < 2:
+    print("Please provide a csv file with examples.")
+elif len(sys.argv) < 3:
+    cldf2word.convert(
+        filename=sys.argv[1],
+        all=True,
+        example_ids=[]
+    )
+elif len(sys.argv) > 2:
+    cldf2word.convert(
+        filename=sys.argv[1],
+        example_ids=sys.argv[2:]
+    )

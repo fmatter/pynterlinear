@@ -1,7 +1,13 @@
 README.md
+setup.cfg
 setup.py
+bin/cldf2latex
+bin/cldf2word
 pynterlinear/__init__.py
+pynterlinear/cldf2latex.py
+pynterlinear/cldf2word.py
 pynterlinear.egg-info/PKG-INFO
 pynterlinear.egg-info/SOURCES.txt
 pynterlinear.egg-info/dependency_links.txt
+pynterlinear.egg-info/requires.txt
 pynterlinear.egg-info/top_level.txt
