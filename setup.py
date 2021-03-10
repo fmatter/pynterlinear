@@ -15,6 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "python-docx",
+        "pyperclip"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
