@@ -12,7 +12,10 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="-",
-      packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(),
+    install_requires=[
+        "docx"
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
