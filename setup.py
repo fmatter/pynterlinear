@@ -14,7 +14,8 @@ setuptools.setup(
     url="-",
     packages=setuptools.find_packages(),
     install_requires=[
-        "docx"
+        "docx",
+        "exceptions",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
