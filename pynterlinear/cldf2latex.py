@@ -29,12 +29,13 @@ def get_example_hash(ex, from_corpus=True):
     ex_hash = {
             "id": ex["Example_ID"],
             "obj": ex["Segmentation"],
-            "language": ex["Language_ID"],
             "gloss": ex["Gloss"],
             "trans": ex["Translation"],
             "surface": ex["Sentence"],
             "parnote": info
         }
+    if "Language_ID" in ex:
+        ex_hash["language"]= ex["Language_ID"]
     if from_corpus:
         ex_hash["speaker"] = ex["Speaker"]
         ex_hash["text_id"] = ex["Text_ID"]
@@ -44,7 +45,7 @@ def get_example_hash(ex, from_corpus=True):
             ex_hash["end"] = get_time(ex["Time_End"])
 
     else:
-        ex_hash["source"] = ex["Source"]
+        if "Source" in ex: ex_hash["source"] = ex["Source"]
     return ex_hash
         
 def convert(filename, example_ids, all=False, from_corpus=True):
@@ -60,14 +61,14 @@ def convert(filename, example_ids, all=False, from_corpus=True):
             examples.append(get_example_hash(ex))
         output = ""
         for ex in examples:
-            output += pynterlinear.convert_to_expex([ex], from_corpus=from_corpus, for_beamer=False) + "\n\n"
+            output += pynterlinear.convert_to_expex([ex], from_corpus=from_corpus, for_beamer=False, latex_labels=False) + "\n\n"
     else:
         for key in example_ids:
             ex = example_data[key]
             examples.append(get_example_hash(ex, from_corpus))
         if "Speaker" not in example_data[example_ids[0]].keys():
             from_corpus = False
-        output = pynterlinear.convert_to_expex(examples, from_corpus=from_corpus, for_beamer=False)
+        output = pynterlinear.convert_to_expex(examples, from_corpus=from_corpus, for_beamer=False, latex_labels=False)
     
     for form in pynterlinear.get_unknown_abbrevs():
         print("\\newGlossingAbbrev{%s}{%s}" % (form, form))

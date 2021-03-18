@@ -14,5 +14,5 @@ elif len(sys.argv) < 3:
 elif len(sys.argv) > 2:
     cldf2word.convert(
         filename=sys.argv[1],
-        example_ids=sys.argv[2:]
+        example_ids=sys.argv[2:],
     )

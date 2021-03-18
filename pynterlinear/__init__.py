@@ -1,6 +1,7 @@
 import re
 from docx import Document, shared
 import pathlib
+import os
 import logging
 # logging.basicConfig(filename='pynterlinear.log',level=logging.DEBUG)
 # logging.disable(logging.CRITICAL)
@@ -341,10 +342,31 @@ def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NE
     output += "\\xe"
     return(output)
 
-def convert_to_word(examples, use_tables=True, number=1):
-    document = Document()
+def convert_to_word(examples, use_tables=True, number=1, filename="cldf2word_export.docx"):
+    
+    def get_running_number(document):
+        for i in range(1,len(document.tables)+1):
+            topright = document.tables[-i].rows[0].cells[0].text
+            print(f"Looking at table {-i}, text is {topright}")
+            search = re.search('\((.*)\)', topright)
+            if search:
+                print(f"HIT {search.group(1)}")
+                return search.group(1)
+        return None
+        
+    def delete_paragraph(paragraph):
+        p = paragraph._element
+        p.getparent().remove(p)
+        p._p = p._element = None
+        
+    if filename in os.listdir("."):
+        document = Document(filename)
+        nr = get_running_number(document)
+        running_number = 1 if nr is None else int(nr)+1
+    else:
+        document = Document()
+        running_number = 1
     if use_tables:
-        tables = []
         xs = 1
         if len(examples) > 1:
             xs+=1
@@ -352,13 +374,16 @@ def convert_to_word(examples, use_tables=True, number=1):
         exhe = 3
         height = len(examples)*exhe     
         for exno, example in enumerate(examples):
+            #todo comment out for pex
+            running_number = exno+1
             obj_words = example["obj"].split(" ")
             gloss_words = example["gloss"].split(" ")
             trans = example["trans"]
             table = document.add_table(rows=exhe, cols=len(obj_words)+xs)
-            tables.append(table)
+            #Only for development purposes
+            # table.style = 'Table Grid'
             for i, obj_word in enumerate(obj_words):
-                table.rows[0].cells[i+xs].text = obj_word
+                table.rows[0].cells[i+xs].paragraphs[0].add_run(obj_word).italic = True
             for i, gloss_word in enumerate(gloss_words):
                 if (len(gloss_word)==2
                         and gloss_word[0] == gloss_word[0].upper()
@@ -386,13 +411,16 @@ def convert_to_word(examples, use_tables=True, number=1):
                     cell._tc.tcPr.tcW.type = "auto"
             transcell = table.rows[-1].cells[0+xs].merge(table.rows[-1].cells[-1])
             transcell.text = "‘%s’" % trans
-            if exno == 0:
-                table.rows[0].cells[0].text = "(1)"
-            if len(examples) > 1:
-                if exno > 0:
-                    table.rows[0].cells[0].text = "     "
-                table.rows[0].cells[1].text = "%s." % chr(97+exno)
+            table.rows[0].cells[0].allow_autofit = False 
+            table.rows[0].cells[0].width = shared.Cm(1)
+            # if exno == 0:
+            table.rows[0].cells[0].text = f"({running_number})"
+            # if len(examples) > 1:
+            #     table.rows[0].cells[1].text = "%s." % chr(97+exno)
             document.add_paragraph("")
+            print(document.paragraphs[-1])
+            # delete_paragraph(document.paragraphs[-1])
+            print(len(document.tables))
     else:
         for exno, example in enumerate(examples):
             gloss_para = document.add_paragraph("")#document.add_paragraph("(%s)\t%s" % (exno+number, example[0]["lang"]))
@@ -420,8 +448,8 @@ def convert_to_word(examples, use_tables=True, number=1):
                             else:
                                 add_text = gloss_para.add_run(morpheme)
                     if i < len(sub_example["gloss"].split(" "))-1: gloss_para.add_run("\t")
-                gloss_para.add_run("\n\t\t‘%s’ (%s)\n" % (sub_example["trans"], sub_example["source"]))
+                gloss_para.add_run("\n\t\t‘%s’\n" % (sub_example["trans"]))#, sub_example["source"]))
             tab_stops = gloss_para.paragraph_format.tab_stops
             tab_stops.add_tab_stop(shared.Cm(1.27))
             print(len(tab_stops))
-    return document
+    document.save(filename)
