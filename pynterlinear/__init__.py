@@ -342,46 +342,47 @@ def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NE
     output += "\\xe"
     return(output)
 
-def convert_to_word(examples, use_tables=True, number=1, filename="csv2word_export.docx"):
+def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
     
-    def get_running_number(document):
+    def get_running_number_tables(document):
         for i in range(1,len(document.tables)+1):
             topright = document.tables[-i].rows[0].cells[0].text
-            print(f"Looking at table {-i}, text is {topright}")
             search = re.search('\((.*)\)', topright)
             if search:
-                print(f"HIT {search.group(1)}")
-                return search.group(1)
-        return None
+                return int(search.group(1))
+        return 0
         
-    def delete_paragraph(paragraph):
-        p = paragraph._element
-        p.getparent().remove(p)
-        p._p = p._element = None
+    def get_running_number_tabs(document):
+        for i in range(1,len(document.paragraphs)+1):
+            partext = document.paragraphs[-i].text
+            search = re.search('\((.*)\)', partext)
+            if search:
+                return int(search.group(1))
+        return 0
         
     if filename in os.listdir("."):
         document = Document(filename)
-        nr = get_running_number(document)
-        running_number = 1 if nr is None else int(nr)+1
+        if use_tables: 
+            running_number = get_running_number_tables(document)+1
+        else:
+            running_number = get_running_number_tabs(document)+1
     else:
         document = Document()
         running_number = 1
+    
     if use_tables:
         xs = 1
         if len(examples) > 1:
             xs+=1
         max_length = 0
         exhe = 3
-        height = len(examples)*exhe     
         for exno, example in enumerate(examples):
-            #todo comment out for pex
-            running_number = exno+1
             obj_words = example["obj"].split(" ")
             gloss_words = example["gloss"].split(" ")
             trans = example["trans"]
             table = document.add_table(rows=exhe, cols=len(obj_words)+xs)
             #Only for development purposes
-            # table.style = 'Table Grid'
+            # table.style = "Table Grid"
             for i, obj_word in enumerate(obj_words):
                 table.rows[0].cells[i+xs].paragraphs[0].add_run(obj_word).italic = True
             for i, gloss_word in enumerate(gloss_words):
@@ -413,43 +414,50 @@ def convert_to_word(examples, use_tables=True, number=1, filename="csv2word_expo
             transcell.text = "‘%s’" % trans
             table.rows[0].cells[0].allow_autofit = False 
             table.rows[0].cells[0].width = shared.Cm(1)
-            # if exno == 0:
-            table.rows[0].cells[0].text = f"({running_number})"
-            # if len(examples) > 1:
-            #     table.rows[0].cells[1].text = "%s." % chr(97+exno)
-            document.add_paragraph("")
-            print(document.paragraphs[-1])
-            # delete_paragraph(document.paragraphs[-1])
-            print(len(document.tables))
+            if exno == 0:
+                table.rows[0].cells[0].text = f"({running_number})"
+            if len(examples) > 1:
+                table.rows[0].cells[1].text = "%s." % chr(97+exno)
+            #Remove random 10pt spacing in EVERY CELL
+            for row in table.rows:
+                for cell in row.cells:
+                    for par in cell.paragraphs:
+                        par.paragraph_format.space_after = shared.Pt(0)
+            par = document.add_paragraph("")
+            par.paragraph_format.space_after = shared.Pt(0)
     else:
+        gloss_para = document.add_paragraph("(%s)" % running_number)
         for exno, example in enumerate(examples):
-            gloss_para = document.add_paragraph("")#document.add_paragraph("(%s)\t%s" % (exno+number, example[0]["lang"]))
-            for subex_c, sub_example in enumerate([example]):
-                if len(example) == 1:
-                    ex_label = exno+number
+            if len(examples) > 1:
+                sub_ex_label = chr(97+exno)  + ".\t"
+                tabstops = [1, 2]
+            else:
+                sub_ex_label = ""
+                tabstops = [1.25]
+            gloss_para.add_run("\t%s" % sub_ex_label)
+            obj_run = gloss_para.add_run("%s\n\t\t" % (example["obj"].replace(" ", "\t")))
+            obj_run.italic = True
+            for i, gloss_word in enumerate(example["gloss"].split(" ")):
+                if (len(gloss_word)==2
+                        and gloss_word[0] == gloss_word[0].upper()
+                        and gloss_word[1] == "."):
+                    add_text = gloss_para.add_run(gloss_word)
                 else:
-                    ex_label = exno+number
-                    sub_ex_label = chr(97+subex_c)
-                gloss_para.add_run("\n\t%s.\t%s\n\t\t" % (sub_ex_label, sub_example["obj"].replace(" ", "\t")))
-                for i, gloss_word in enumerate(sub_example["gloss"].split(" ")):
-                    if (len(gloss_word)==2
-                            and gloss_word[0] == gloss_word[0].upper()
-                            and gloss_word[1] == "."):
-                        add_text = gloss_para.add_run(gloss_word)
-                    else:
-                        morphemes = split_word(gloss_word)
-                        for morpheme in morphemes:
-                            #take proper nouns into account
-                            if (morpheme == morpheme.upper()
-                                    and morpheme not in delimiters
-                                    and morpheme != "?"):
-                                add_text = gloss_para.add_run(morpheme.lower())
-                                add_text.font.small_caps = True
-                            else:
-                                add_text = gloss_para.add_run(morpheme)
-                    if i < len(sub_example["gloss"].split(" "))-1: gloss_para.add_run("\t")
-                gloss_para.add_run("\n\t\t‘%s’\n" % (sub_example["trans"]))#, sub_example["source"]))
+                    morphemes = split_word(gloss_word)
+                    for morpheme in morphemes:
+                        #take proper nouns into account
+                        if (morpheme == morpheme.upper()
+                                and morpheme not in delimiters
+                                and morpheme != "?"):
+                            add_text = gloss_para.add_run(morpheme.lower())
+                            add_text.font.small_caps = True
+                        else:
+                            add_text = gloss_para.add_run(morpheme)
+                if i < len(example["gloss"].split(" "))-1:
+                    gloss_para.add_run("\t")    
+            gloss_para.add_run("\n\t\t‘%s’" % (example["trans"]))#, sub_example["source"]))
             tab_stops = gloss_para.paragraph_format.tab_stops
-            tab_stops.add_tab_stop(shared.Cm(1.27))
-            print(len(tab_stops))
+            for tabstop in tabstops:
+                tab_stops.add_tab_stop(shared.Cm(tabstop))
+            gloss_para = document.add_paragraph()
     document.save(filename)

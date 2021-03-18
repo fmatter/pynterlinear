@@ -2,7 +2,7 @@ from docx import Document
 import csv
 import pynterlinear
 
-def convert(filename, example_ids, all=False):
+def convert(filename, example_ids=[], all=False, tabs=False):
     reader = csv.DictReader(open(filename))
     example_data = {}
     for row in reader:
@@ -24,4 +24,4 @@ def convert(filename, example_ids, all=False):
         for example in examples:
             if example["id"] in example_ids:
                 examples_to_print.append(example)
-    document = pynterlinear.convert_to_word(examples_to_print, use_tables=False)
+    document = pynterlinear.convert_to_word(examples_to_print, use_tables= not tabs)
