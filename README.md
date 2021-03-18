@@ -6,3 +6,6 @@ It provides two command-line hooks:
 ## `csv2word`
 
 ## `csv2latex`
+
+
+You can also use `pynterlinear` in your own python scripts.
