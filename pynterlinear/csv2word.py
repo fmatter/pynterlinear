@@ -24,4 +24,4 @@ def convert(filename, example_ids, all=False):
         for example in examples:
             if example["id"] in example_ids:
                 examples_to_print.append(example)
-    document = pynterlinear.convert_to_word(examples_to_print, use_tables=True)
+    document = pynterlinear.convert_to_word(examples_to_print, use_tables=False)

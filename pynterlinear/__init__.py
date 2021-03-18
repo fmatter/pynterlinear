@@ -342,7 +342,7 @@ def convert_to_expex(examples, for_beamer = False, from_corpus=False, pextag="NE
     output += "\\xe"
     return(output)
 
-def convert_to_word(examples, use_tables=True, number=1, filename="cldf2word_export.docx"):
+def convert_to_word(examples, use_tables=True, number=1, filename="csv2word_export.docx"):
     
     def get_running_number(document):
         for i in range(1,len(document.tables)+1):
