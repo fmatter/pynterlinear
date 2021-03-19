@@ -37,7 +37,8 @@ An example workflow could then look as follows:
 
 1. compile a list of examples in a CSV file. This will also make it very easy to share it as a [`CLDF`](https://github.com/cldf/cldf) dataset, and to check it for consistency with [`pyIGT`](https://github.com/cldf/pyigt).
 2. create a list of Example_IDs you want to use in your document, for example:
-```unu-1 unu-2
+```
+unu-1 unu-2
 bon-1
 ```
 3. convert it to `.docx`
