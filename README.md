@@ -14,7 +14,7 @@ You can use it in your own python scripts, just take a look at the `__init__.py`
 Pynterlinear also provides two command-line hooks which take CSV files as their input.
 These CSV files need to be structured as in the following example:
 
-|Example_ID|Language_ID|Sentence                            |Segmentation                      |Gloss                                       |Translation                       |Source                |
+|Example_ID|Language_ID|Sentence                            |Segmentation                      |Gloss                                       |<sub>Translation</sub>                       |Source                |
 |----------|-----------|------------------------------------|----------------------------------|--------------------------------------------|----------------------------------|----------------------|
 |unu-1     |unua1237   |arres soxa tuen                     |ares soxa tue-n                   |person one brother-3SG                      |someone's brother                 |pearce2015grammar[140]|
 |unu-2     |unua1237   |Vin nge i-rav-i dabangon ngo imrebe?|βin ŋe i-ɾav-i dabaŋo-n ŋo i-mɾebe|woman PROX 3SG-take-TR belly-3SG DEM 3SG-how|How did this woman get that belly?|pearce2015grammar[249]|
