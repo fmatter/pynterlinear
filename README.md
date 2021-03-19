@@ -47,3 +47,5 @@ You can manually change the last number in `csv2word_export.docx` and `pynterlin
 This may be useful if you e.g. have a non-interlinear numbered example in your document, or some other example you insert manually.
 
 ### `csv2latex`
+
+…
