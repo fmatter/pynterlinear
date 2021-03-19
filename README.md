@@ -14,12 +14,12 @@ You can use it in your own python scripts, just take a look at the `__init__.py`
 Pynterlinear also provides two command-line hooks which take CSV files as their input.
 These CSV files need to be structured as in the following example:
 
-|Example_ID|Language_ID|Sentence                            |Segmentation                      |Gloss                                       |<sub>Translation</sub>                       |Source                |
-|----------|-----------|------------------------------------|----------------------------------|--------------------------------------------|----------------------------------|----------------------|
-|unu-1     |unua1237   |arres soxa tuen                     |ares soxa tue-n                   |person one brother-3SG                      |someone's brother                 |pearce2015grammar[140]|
-|unu-2     |unua1237   |Vin nge i-rav-i dabangon ngo imrebe?|βin ŋe i-ɾav-i dabaŋo-n ŋo i-mɾebe|woman PROX 3SG-take-TR belly-3SG DEM 3SG-how|How did this woman get that belly?|pearce2015grammar[249]|
-|bon-1|bona1250|ɕaʑə d͡ʐama=nə koʁol-t͡ɕə|ɕaʑə d͡ʐama=nə koʁol-t͡ɕə|child window=ACC shatter-PFV|The child shattered the window.|fried2010baoantu[215]|
-|…|…|…|…|…|…|…|
+|<sub>Example_ID</sub>|<sub>Language_ID</sub>|<sub>Sentence</sub>                            |<sub>Segmentation</sub>                      |<sub>Gloss</sub>                                       |<sub>Translation</sub>                       |<sub>Source</sub>                |
+|---------------------|----------------------|-----------------------------------------------|---------------------------------------------|-------------------------------------------------------|---------------------------------------------|---------------------------------|
+|<sub>unu-1</sub>     |<sub>unua1237</sub>   |<sub>arres soxa tuen</sub>                     |<sub>ares soxa tue-n</sub>                   |<sub>person one brother-3SG</sub>                      |<sub>someone's brother</sub>                 |<sub>pearce2015grammar[140]</sub>|
+|<sub>unu-2</sub>     |<sub>unua1237</sub>   |<sub>Vin nge i-rav-i dabangon ngo imrebe?</sub>|<sub>βin ŋe i-ɾav-i dabaŋo-n ŋo i-mɾebe</sub>|<sub>woman PROX 3SG-take-TR belly-3SG DEM 3SG-how</sub>|<sub>How did this woman get that belly?</sub>|<sub>pearce2015grammar[249]</sub>|
+|<sub>bon-1</sub>     |<sub>bona1250</sub>   |<sub>ɕaʑə d͡ʐama=nə koʁol-t͡ɕə</sub>           |<sub>ɕaʑə d͡ʐama=nə koʁol-t͡ɕə</sub>         |<sub>child window=ACC shatter-PFV</sub>                |<sub>The child shattered the window.</sub>   |<sub>fried2010baoantu[215]</sub> |
+
 
 ### `csv2word`
 
