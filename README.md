@@ -23,8 +23,8 @@ These CSV files need to be structured as in the following example:
 ### `csv2word`
 
 - arguments:
-	- A csv file containing examples
-	- A list of Example_IDs from the csv file. If none are specified, all will be printed.
+  - A csv file containing examples
+  - A list of Example_IDs from the csv file. If none are specified, all will be printed.
 	
 - options:
   - `-f`, `--file`:  A text file containing a linebreak-separated list of Example_IDs. IDs on the same line separated by a space will be printed as a multi-part example.
