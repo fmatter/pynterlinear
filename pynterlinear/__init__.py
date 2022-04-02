@@ -391,10 +391,10 @@ def convert_to_expex(
             else:
                 surface_string = "\\glpreamble %s//\n" % (example["surface"])
         # allow custom glc contents
-        if "glc" in example:
-            glcstring = "\n\\glc " + example["glc"] + "//"
-        else:
-            glcstring = ""
+        glcstring = ""
+        for k, v in example.items():
+            if "glc" in k:
+                glcstring += "\n\\glc " + example[k] + "//"
         # Get the \gl{}-ified interlinear gloss
         gloss_text_markup = get_expex_code(example["gloss"])
         # Put together the interlinear text
