@@ -37,7 +37,8 @@ morpheme_delimiters = ["-", "=", "~"]
 glossing_abbrevs = {}
 data_dir = os.path.join(os.path.dirname(__file__), "data")
 fn = os.path.join(data_dir, "glossing.txt")
-raw_glosses = open(fn, "r").read()
+with open(fn, "r", encoding="utf-8") as f:
+    raw_glosses = f.read()
 for entry in raw_glosses.split("\n"):
     glossing_abbrevs[entry.split("\t")[0]] = entry.split("\t")[1]
 
@@ -60,7 +61,7 @@ def get_all_abbrevs():
     return glossing_abbrevs
 
 
-def pad_ex(obj, gloss, tuple=False, as_list=False):
+def pad_ex(obj, gloss, as_tuple=False, as_list=False):
     out_obj = []
     out_gloss = []
     if not as_list:
@@ -75,10 +76,9 @@ def pad_ex(obj, gloss, tuple=False, as_list=False):
             g += " " * diff
         out_obj.append(o)
         out_gloss.append(g)
-    if tuple:
+    if as_tuple:
         return "  ".join(out_obj).strip(" "), "  ".join(out_gloss).strip(" ")
-    else:
-        return "  ".join(out_obj).strip(" ") + "\n" + "  ".join(out_gloss).strip(" ")
+    return "  ".join(out_obj).strip(" ") + "\n" + "  ".join(out_gloss).strip(" ")
 
 
 # Can be used to quickly look up the proper abbreviation for something.
@@ -86,7 +86,7 @@ def search_abbrev(term):
     output = []
     for key, abbrev in glossing_abbrevs.items():
         if term in abbrev:
-            output.append("%s\t%s" % (key, abbrev))
+            output.append(f"{key}\t{abbrev}")
     return "\n".join(output)
 
 
@@ -99,7 +99,7 @@ def get_morphemes_from_word(object_word, gloss_word):
     forms = object_word.split(" ")
     glosses = gloss_word.split(" ")
     if len(forms) != len(glosses):
-        print("%s: mismatch in morpheme number!" % object_word)
+        print(f"{object_word}: mismatch in morpheme number!")
     return dict(zip(forms, glosses))
 
 
@@ -108,11 +108,10 @@ def get_morphemes(**example):
     pairings = {}
     if len(example["obj"]) != len(example["gloss"]):
         print(
-            "%s: mismatch in word number! %s vs %s words"
-            % (example["id"], len(example["obj"]), len(example["gloss"]))
+            f"""{example["id"]}: mismatch in word number! {len(example["obj"])} vs {len(example["gloss"])} words"""
         )
-    for i, word in enumerate(example["obj"]):
-        new_entries = get_morphemes_from_word(example["obj"][i], example["gloss"][i])
+    for obj, gloss in zip(example["obj"], example["gloss"]):
+        new_entries = get_morphemes_from_word(obj, gloss)
         pairings = {**pairings, **new_entries}
     return pairings
 
@@ -121,7 +120,7 @@ def get_morphemes(**example):
 def split_word(word):
     output = []
     char_list = list(word)
-    for i, char in enumerate(char_list):
+    for char in char_list:
         if len(output) == 0 or (char in delimiters or output[-1] in delimiters):
             output.append(char)
         else:
@@ -131,14 +130,14 @@ def split_word(word):
 
 # Takes an uppercase string like 1SG and breaks it up into
 # known abbreviations like ["1", "SG"]
-def get_glossing_combination(input):
+def get_glossing_combination(input_string):
     output = []
     temp_text = ""
-    for i, char in enumerate(list(input)):
+    for i, char in enumerate(list(input_string)):
         if re.match(r"[1-3]+", char):
-            if i < len(input) - 1 and input[i + 1] == "+":
+            if i < len(input_string) - 1 and input_string[i + 1] == "+":
                 temp_text += char
-            elif input[i - 1] == "+":
+            elif input_string[i - 1] == "+":
                 temp_text += char
                 output.append(temp_text)
                 temp_text = ""
@@ -161,9 +160,9 @@ def get_glossing_combination(input):
 
 
 # Creates expex code with \gl{} for glossing abbreviations
-def get_expex_code(input):
-    input = input.replace("\\", "\\textbackslash()")
-    words_list = input.split(" ")
+def get_expex_code(input_string):
+    input_string = input_string.replace("\\", "\\textbackslash()")
+    words_list = input_string.split(" ")
     # iterate through words of glossing line
     for i, word in enumerate(words_list):
         # Transform _X_ to subscript beforehand
@@ -193,13 +192,13 @@ def get_expex_code(input):
                     )
                 ):
                     if part.lower() in glossing_abbrevs:
-                        output += "\\gl{%s}" % part.lower()
+                        output += f"\\gl{{{part.lower()}}}"
                     # take care of numbered genders
                     elif part[0] == "G" and re.match(r"\d", part[1:]):
-                        output += "\\gl{g}%s" % (part[1:])
+                        output += f"\\gl{{g}}{part[1:]}"
                     else:
                         for extracted_morpheme in get_glossing_combination(part):
-                            output += "\\gl{%s}" % extracted_morpheme.lower()
+                            output += f"\\gl{{{extracted_morpheme.lower()}}}"
                 else:
                     output += part
         words_list[i] = output[1:]
@@ -251,7 +250,7 @@ def convert_to_expex(
         same_source = False
     if pextag:
         pex = True
-        output = "\\pex<%s>" % pextag
+        output = f"\\pex<{pextag}>" 
     else:
         pex = False
         output = ""
@@ -266,10 +265,7 @@ def convert_to_expex(
     if same_language and "language" in examples[0].keys():
         # Print \glottolink if for_beamer is set to True
         if for_beamer and 0 == 1:
-            language_string = "\\glottolink{%s}{%s}" % (
-                examples[0]["glottocode"],
-                examples[0]["language"],
-            )
+            language_string = f"""\\glottolink{{{examples[0]["glottocode"]}}}{{{examples[0]["language"]}}}"""
         elif same_language and from_corpus:
             language_string = ""
         else:
