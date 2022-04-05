@@ -65,7 +65,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip setuptools
           python3 -m pip install .[dev,publishing]
-      - name: Check style against standards using prospector
-        run: prospector
+      # - name: Check style against standards using prospector
+      #   run: prospector
       - name: Check import order
         run: isort --check-only src/pynterlinear --diff
