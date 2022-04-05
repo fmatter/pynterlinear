@@ -1,8 +1,9 @@
 """Documentation about pynterlinear"""
-import re
-from docx import Document, shared
-import os
 import logging
+import os
+import re
+from docx import Document
+from docx import shared
 
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

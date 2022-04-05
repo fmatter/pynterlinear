@@ -1,7 +1,7 @@
 import csv
-import pyperclip
 import datetime
 from string import Template
+import pyperclip
 import pynterlinear
 
 
