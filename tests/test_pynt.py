@@ -7,8 +7,8 @@ def test_gloss():
         "K. kill-REM": "K. kill-\\gl{rem}",
         # "laugh[3SG.IMP]": "laugh[\\gl{3}\\gl{sg}.\\gl{imp}]",
         "3>3-kill-IPFV.PST": "\\gl{3}>\\gl{3}-kill-\\gl{ipfv}.\\gl{pst}",
-        "go-3SG.PST-1>2-CAUS[ERG]":
-        "go-\\gl{3}\\gl{sg}.\\gl{pst}-\\gl{1}>\\gl{2}-\\gl{caus}[\\gl{erg}]",
+        "go-3SG.PST-1>2-CAUS[ERG]": "go-\\gl{3}\\gl{sg}.\\gl{pst}\
+        -\\gl{1}>\\gl{2}-\\gl{caus}[\\gl{erg}]",
         # "K.-ERG[3SG>2PL.PST]":
         # "K.-\\gl{erg}[\\gl{3}\\gl{sg}>\\gl{2}\\gl{pl}.\\gl{pst}]",
         "M.SG": "\\gl{m}.\\gl{sg}",

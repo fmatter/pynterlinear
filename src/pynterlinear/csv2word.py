@@ -1,15 +1,15 @@
 import csv
-# import pynterlinear
+import pynterlinear
 
 
-def convert(filename, example_ids=[], all=False, tabs=False):
+def convert(filename, example_ids=None, do_all=False, tabs=False):
     reader = csv.DictReader(open(filename))
     example_data = {}
     for row in reader:
         example_data[row["Example_ID"]] = row
 
     examples = []
-    for my_id, ex in example_data.items():
+    for ex in example_data.values():
         examples.append(
             {
                 "id": ex["Example_ID"],
@@ -19,11 +19,11 @@ def convert(filename, example_ids=[], all=False, tabs=False):
                 "trans": ex["Translation"],
             }
         )
-    if all:
+    if do_all:
         examples_to_print = examples
     else:
         examples_to_print = []
         for example in examples:
             if example["id"] in example_ids:
                 examples_to_print.append(example)
-    # document = pynterlinear.convert_to_word(examples_to_print, use_tables=not tabs)
+    pynterlinear.convert_to_word(examples_to_print, use_tables=not tabs)

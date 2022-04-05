@@ -106,10 +106,9 @@ def get_morphemes_from_word(object_word, gloss_word):
 # This takes a whole example (hash) and returns a form--meaning hash
 def get_morphemes(**example):
     pairings = {}
-    if len(example["obj"]) != len(example["gloss"]):
-        print(
-            f"""{example["id"]}: mismatch in word number! {len(example["obj"])} vs {len(example["gloss"])} words"""
-        )
+    l1, l2 = len(example["obj"]), len(example["gloss"])
+    if l1 != l2:
+        print(f"""{example["id"]}: mismatch in word number! {l1} vs {l2} words""")
     for obj, gloss in zip(example["obj"], example["gloss"]):
         new_entries = get_morphemes_from_word(obj, gloss)
         pairings = {**pairings, **new_entries}
@@ -159,6 +158,25 @@ def get_glossing_combination(input_string):
     return output
 
 
+def is_glossing_candidate(part, parts, j):
+    return (
+        part == part.upper()
+        and part not in delimiters
+        and part != "?"
+        and not (
+            len(part) == 1
+            and not re.match(r"\d", part)  # is it only one capital letter?
+            and (
+                # len(parts) == j+1 #are we at the end of the word?
+                # or (
+                # or are there more characters?
+                len(parts) == j + 2
+                and parts[j + 1] in ["."]  # and is the next character a period?
+            )
+        )
+    )
+
+
 # Creates expex code with \gl{} for glossing abbreviations
 def get_expex_code(input_string):
     input_string = input_string.replace("\\", "\\textbackslash()")
@@ -174,23 +192,7 @@ def get_expex_code(input_string):
         else:
             parts = split_word(word)
             for j, part in enumerate(parts):
-                if (
-                    part == part.upper()
-                    and part not in delimiters
-                    and part != "?"
-                    and not (
-                        len(part) == 1
-                        and not re.match(r"\d", part)  # is it only one capital letter?
-                        and (
-                            # len(parts) == j+1 #are we at the end of the word?
-                            # or (
-                            # or are there more characters?
-                            len(parts) == j + 2
-                            and parts[j + 1]
-                            in ["."]  # and is the next character a period?
-                        )
-                    )
-                ):
+                if is_glossing_candidate(part, parts, j):
                     if part.lower() in glossing_abbrevs:
                         output += f"\\gl{{{part.lower()}}}"
                     # take care of numbered genders
@@ -239,33 +241,27 @@ def convert_to_expex(
         lengths.append(len(example["gloss"]) + 5)
         lengths.append(len(example["trans"]))
     # If there is only one language, we only need to print it once
-    if len(list(set(languages))) < 2:
-        same_language = True
-    else:
-        same_language = False
+    same_language = len(set(languages)) < 2
     # If there is only one source, we only need to print it once
-    if len(list(set(sources))) == 1:
-        same_source = True
-    else:
-        same_source = False
+    same_source = len(set(sources)) == 1
     if pextag:
         pex = True
-        output = f"\\pex<{pextag}>" 
+        output = f"\\pex<{pextag}>"
     else:
         pex = False
         output = ""
     len_threshold = max(lengths)
-    if pex and multicols and len_threshold < 35 and same_language and same_source:
-        multicols = True
-    else:
-        multicols = False
+    multicols = (
+        pex and multicols and len_threshold < 35 and same_language and same_source
+    )
     # If there is one and only language specified, we print it right at the
     # start, after \(p)ex
     language_string = ""
     if same_language and "language" in examples[0].keys():
         # Print \glottolink if for_beamer is set to True
-        if for_beamer and 0 == 1:
-            language_string = f"""\\glottolink{{{examples[0]["glottocode"]}}}{{{examples[0]["language"]}}}"""
+        if for_beamer:
+            gl, lg = examples[0]["glottocode"], examples[0]["language"]
+            language_string = f"""\\glottolink{{{gl}}}{{{lg}}}"""
         elif same_language and from_corpus:
             language_string = ""
         else:
@@ -281,7 +277,7 @@ def convert_to_expex(
     # Same logic as before, if there is only one source (for the one
     # language), we add it only once, at the start
     if same_source:
-        logging.debug("All subexamples of pex %s have the same source!" % pextag)
+        logging.debug(f"All subexamples of pex {pextag} have the same source.")
         logging.debug(examples)
         # Gather the page (ranges) given in the single sources in one list
         page_string = []
@@ -293,11 +289,11 @@ def convert_to_expex(
             page_string = ", ".join(page_string)
         # Print the list joined by commas
         if sources[0] != "pc":
-            output += " \\parencite[%s][%s]{%s}" % (parnote, page_string, sources[0])
+            output += f" \\parencite[{parnote}][{page_string}]{{{sources[0]}}}"
         else:
-            output += " \\perscommpar{%s}" % page_string
+            output += " \\perscommpar{{{page_string}}}"
     if latex_labels and pex:
-        output += r"\exl{%s}" % (pextag)
+        output += f"\\exl{{{pextag}}}"
     # beamer for some reason wants a line break after \pex, but absolutely
     # not after \ex; text documents want the opposite
     if (for_beamer and pex) or (not for_beamer and not pex and language_string != ""):
@@ -314,9 +310,9 @@ def convert_to_expex(
         # We simply add nothing if we're dealing with a single example,
         # otherwise we add an \a with a tag
         if pex:
-            part_text = "\\a<%s>" % example["id"]
+            part_text = f"""\\a<{example["id"]}>"""
         else:
-            part_text = "\\ex<%s>" % example["id"]
+            part_text = f"""\\ex<{example["id"]}>"""
         # If there is a source, we extract the details
         if "source" in example.keys():
             pages = example["source"].split("[")[1].split("]")[0]
@@ -345,11 +341,9 @@ def convert_to_expex(
         # after the respective \a
         if not same_language:
             # Again with the glottolink string
-            if for_beamer and 0 == 1:
-                language_string = "\\glottolink{%s}{%s}" % (
-                    example["glottocode"],
-                    example["language"],
-                )
+            if for_beamer:
+                gl, lg = examples[0]["glottocode"], examples[0]["language"]
+                language_string = f"""\\glottolink{{{gl}}}{{{lg}}}"""
             else:
                 language_string = example["language"]
             part_text += " " + language_string
@@ -357,13 +351,9 @@ def convert_to_expex(
             # sources seperately
             if not same_source and not from_corpus:
                 if source_key != "pc":
-                    part_text += " \\parencite[%s][%s]{%s}" % (
-                        parnote,
-                        pages,
-                        source_key,
-                    )
+                    part_text += f" \\parencite[{parnote}][{pages}]{{{source_key}}}"
                 else:
-                    part_text += " \\perscommpar{%s}" % pages
+                    part_text += f" \\perscommpar{{{pages}}}"
         # Text documents also want a linebreak after \a with text behind it,
         # beamer doesn't
         if not for_beamer and not same_language:
@@ -379,50 +369,42 @@ def convert_to_expex(
             surface_string = ""
         else:
             if "[" in example["surface"] and "]" in example["surface"]:
-                surface_string = "\\glpreamble \\normalfont %s//\n" % (
-                    example["surface"]
+                surface_string = (
+                    f"""\\glpreamble \\normalfont {example["surface"]}//\n"""
                 )
             else:
-                surface_string = "\\glpreamble %s//\n" % (example["surface"])
+                surface_string = f"""\\glpreamble {example["surface"]}//\n"""
         # allow custom glc contents
         glcstring = ""
-        for k, v in example.items():
+        for k in example.keys():
             if "glc" in k:
                 glcstring += "\n\\glc " + example[k] + "//"
         # Get the \gl{}-ified interlinear gloss
         gloss_text_markup = get_expex_code(example["gloss"])
         # Put together the interlinear text
-        part_text += "\\begingl\n%s\\gla %s//\n\\glb %s//%s\n\\glft \\qu{%s}" % (
-            surface_string,
-            example["obj"].replace("~", "\\glosstilde{}"),
-            gloss_text_markup,
-            glcstring,
-            example["trans"],
-        )
+        mod_obj = example["obj"].replace("~", "\\glosstilde{}")
+        part_text += f"""\\begingl
+{surface_string}
+\\gla {mod_obj}//
+\\glb {gloss_text_markup}//{glcstring}
+\\glft \\qu{{{example["trans"]}}}"""
         # If we're dealing with one language (which we printed after \pex), but
         # with different sources, we wanna print the sources after the
         # translation
         if same_language and not same_source and "source" in example.keys():
             if source_key != "pc":
-                part_text += " \\parencite[%s][%s]{%s}" % (parnote, pages, source_key)
+                part_text += f" \\parencite[{parnote}][{pages}]{{{source_key}}}"
             else:
-                part_text += " \\perscommpar{%s}" % pages
+                part_text += f" \\perscommpar{{{pages}}}"
         elif from_corpus:
-            part_text += " \\textref[speaker=%s, start=%s, end=%s, part=%s]{%s}" % (
-                speaker,
-                start,
-                end,
-                part,
-                text_id,
-            )
-        # else:
-        #            part_text += " \\parencite[%s]{%s}" % (pages, source_key)
+            part_text += f" \\textref[speaker={speaker}, start={start}, \
+             end={end}, part={part}]{{{text_id}}}"
         # Finish interlinear text
         part_text += "//"
         if latex_labels and pex:
-            part_text += r"\exl{%s.%s}" % (pextag, example["id"])
+            part_text += f"""\\exl{{{pextag}.{example["id"]}}}"""
         elif latex_labels and not pex:
-            part_text += r"\exl{%s}" % (example["id"])
+            part_text += f"""\\exl{{{example["id"]}}}"""
         part_text += "\n\\endgl"
         if not pex and len(examples) > 1:
             part_text += "\n\\xe"
@@ -489,7 +471,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                         table.rows[1]
                         .cells[i + xs]
                         .paragraphs[0]
-                        .add_run("%s" % gloss_word)
+                        .add_run(f"{gloss_word}")
                     )
                 else:
                     morphemes = split_word(gloss_word)
@@ -504,7 +486,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                                 table.rows[1]
                                 .cells[i + xs]
                                 .paragraphs[0]
-                                .add_run("%s" % morpheme.lower())
+                                .add_run(f"{morpheme.lower()}")
                             )
                             tt.font.small_caps = True
                         else:
@@ -512,19 +494,19 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                                 table.rows[1]
                                 .cells[i + xs]
                                 .paragraphs[0]
-                                .add_run("%s" % morpheme)
+                                .add_run(f"{morpheme}")
                             )
             for column in table.columns:
                 for cell in column.cells:
                     cell._tc.tcPr.tcW.type = "auto"
             transcell = table.rows[-1].cells[0 + xs].merge(table.rows[-1].cells[-1])
-            transcell.text = "‘%s’" % trans
+            transcell.text = f"‘{trans}’"
             table.rows[0].cells[0].allow_autofit = False
             table.rows[0].cells[0].width = shared.Cm(1)
             if exno == 0:
                 table.rows[0].cells[0].text = f"({running_number})"
             if len(examples) > 1:
-                table.rows[0].cells[1].text = "%s." % chr(97 + exno)
+                table.rows[0].cells[1].text = f"{chr(97 + exno)}."
             # Remove random 10pt spacing in EVERY CELL
             for row in table.rows:
                 for cell in row.cells:
@@ -533,7 +515,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
             par = document.add_paragraph("")
             par.paragraph_format.space_after = shared.Pt(0)
     else:
-        gloss_para = document.add_paragraph("(%s)" % running_number)
+        gloss_para = document.add_paragraph(f"({running_number})")
         for exno, example in enumerate(examples):
             if len(examples) > 1:
                 sub_ex_label = chr(97 + exno) + ".\t"
@@ -541,10 +523,9 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
             else:
                 sub_ex_label = ""
                 tabstops = [1.25]
-            gloss_para.add_run("\t%s" % sub_ex_label)
-            obj_run = gloss_para.add_run(
-                "%s\n\t\t" % (example["obj"].replace(" ", "\t"))
-            )
+            gloss_para.add_run(f"\t{sub_ex_label}")
+            mod_obj = example["obj"].replace(" ", "\t")
+            obj_run = gloss_para.add_run(f"""{mod_obj}\n\t\t""")
             obj_run.italic = True
             for i, gloss_word in enumerate(example["gloss"].split(" ")):
                 if (
@@ -569,7 +550,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                 if i < len(example["gloss"].split(" ")) - 1:
                     gloss_para.add_run("\t")
             gloss_para.add_run(
-                "\n\t\t‘%s’" % (example["trans"])
+                f"""\n\t\t‘{example["trans"]}’"""
             )  # , sub_example["source"]))
             tab_stops = gloss_para.paragraph_format.tab_stops
             for tabstop in tabstops:

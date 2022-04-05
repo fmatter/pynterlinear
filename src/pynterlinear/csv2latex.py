@@ -9,9 +9,9 @@ class DeltaTemplate(Template):
     delimiter = "%"
 
 
-def get_time(str):
+def get_time(time_str):
     fmt = "%H:%M:%S"
-    tdelta = datetime.timedelta(seconds=int(str) / 1000)
+    tdelta = datetime.timedelta(seconds=int(time_str) / 1000)
     d = {"D": tdelta.days}
     hours, rem = divmod(tdelta.seconds, 3600)
     minutes, seconds = divmod(rem, 60)
@@ -53,7 +53,7 @@ def get_example_hash(ex, from_corpus=True):
     return ex_hash
 
 
-def convert(filename, example_ids, all=False, from_corpus=False):
+def convert(filename, example_ids, do_all=False, from_corpus=False):
     reader = csv.DictReader(open(filename))
     example_data = {}
     for row in reader:
@@ -61,7 +61,7 @@ def convert(filename, example_ids, all=False, from_corpus=False):
 
     examples = []
 
-    if all:
+    if do_all:
         for key, ex in example_data.items():
             examples.append(get_example_hash(ex))
         output = ""
@@ -79,5 +79,5 @@ def convert(filename, example_ids, all=False, from_corpus=False):
         )
 
     for form in pynterlinear.get_unknown_abbrevs():
-        print("\\newGlossingAbbrev{%s}{%s}" % (form, form))
+        print(f"\\newGlossingAbbrev{{{form}}}{{{form}}}")
     pyperclip.copy(output)
