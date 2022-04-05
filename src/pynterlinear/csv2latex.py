@@ -68,8 +68,6 @@ def convert(filename, example_ids, all=False, from_corpus=False):
         output = pynterlinear.convert_to_expex(
             examples, from_corpus=from_corpus, for_beamer=False, latex_labels=False
         )
-        # for ex in examples:
-        #     output += pynterlinear.convert_to_expex([ex], from_corpus=from_corpus, for_beamer=False, latex_labels=False) + "\n\n"
     else:
         for key in example_ids:
             ex = example_data[key]

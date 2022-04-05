@@ -1,6 +1,6 @@
-import setuptools
-import site
-import sys
+#!/usr/bin/env python
 
-site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
-setuptools.setup()
+import setuptools
+
+if __name__ == "__main__":
+    setuptools.setup()

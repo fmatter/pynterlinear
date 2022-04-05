@@ -1,6 +1,5 @@
-from docx import Document
 import csv
-import pynterlinear
+# import pynterlinear
 
 
 def convert(filename, example_ids=[], all=False, tabs=False):
@@ -27,4 +26,4 @@ def convert(filename, example_ids=[], all=False, tabs=False):
         for example in examples:
             if example["id"] in example_ids:
                 examples_to_print.append(example)
-    document = pynterlinear.convert_to_word(examples_to_print, use_tables=not tabs)
+    # document = pynterlinear.convert_to_word(examples_to_print, use_tables=not tabs)

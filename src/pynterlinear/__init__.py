@@ -1,10 +1,17 @@
+"""Documentation about pynterlinear"""
 import re
 from docx import Document, shared
 import os
 import logging
 
-# logging.basicConfig(filename='pynterlinear.log',level=logging.DEBUG)
-# logging.disable(logging.CRITICAL)
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+__author__ = "Florian Matter"
+__email__ = "florianmatter@gmail.com"
+__version__ = "0.0.1"
+
+
 # These symbols could potentially be used to split up morphemes.
 # Some of them are standard, some not.
 delimiters = [
@@ -28,8 +35,8 @@ morpheme_delimiters = ["-", "=", "~"]
 
 # Create a hash of common glossing abbreviations and their meaning.
 glossing_abbrevs = {}
-etc_dir = os.path.join(os.path.dirname(__file__), "etc")
-fn = os.path.join(etc_dir, "glossing.txt")
+data_dir = os.path.join(os.path.dirname(__file__), "data")
+fn = os.path.join(data_dir, "glossing.txt")
 raw_glosses = open(fn, "r").read()
 for entry in raw_glosses.split("\n"):
     glossing_abbrevs[entry.split("\t")[0]] = entry.split("\t")[1]
@@ -115,16 +122,15 @@ def split_word(word):
     output = []
     char_list = list(word)
     for i, char in enumerate(char_list):
-        if len(output) == 0 or (
-            char in delimiters or output[-1] in delimiters
-        ):
+        if len(output) == 0 or (char in delimiters or output[-1] in delimiters):
             output.append(char)
         else:
             output[-1] += char
     return output
 
 
-# Takes an uppercase string like 1SG and breaks it up into known abbreviations like ["1", "SG"]
+# Takes an uppercase string like 1SG and breaks it up into
+# known abbreviations like ["1", "SG"]
 def get_glossing_combination(input):
     output = []
     temp_text = ""
@@ -161,7 +167,7 @@ def get_expex_code(input):
     # iterate through words of glossing line
     for i, word in enumerate(words_list):
         # Transform _X_ to subscript beforehand
-        word = re.sub(r"_([^AP_]+?)_", "\\\\textsubscript{\g<1>}", word)
+        word = re.sub(r"_([^AP_]+?)_", r"\\\\textsubscript{\g<1>}", word)
         output = " "
         # take proper nouns into account
         if len(word) == 2 and word[0] == word[0].upper() and word[1] == ".":
@@ -183,8 +189,6 @@ def get_expex_code(input):
                             len(parts) == j + 2
                             and parts[j + 1]
                             in ["."]  # and is the next character a period?
-                            # and (j == len(parts)-2 or parts[j+2] in ["-", "="]) #and is that period at the end of the word or followed by a delimiter?
-                            # )
                         )
                     )
                 ):
@@ -202,9 +206,9 @@ def get_expex_code(input):
     gloss_text_upcased = " ".join(words_list)
     gloss_text_upcased = (
         gloss_text_upcased.replace("~", "\\glosstilde{}")
-        .replace("_", "\_")
-        .replace("\_a\_", "_a_")
-        .replace("\_p\_", "_p_")
+        .replace("_", "_")
+        .replace("_a_", "_a_")
+        .replace("_p_", "_p_")
         .replace("textbackslash()", "textbackslash{}")
     )
     return gloss_text_upcased
@@ -293,20 +297,14 @@ def convert_to_expex(
             page_string = ", ".join(page_string)
         # Print the list joined by commas
         if sources[0] != "pc":
-            output += " \\parencite[%s][%s]{%s}" % (
-                parnote,
-                page_string,
-                sources[0],
-            )
+            output += " \\parencite[%s][%s]{%s}" % (parnote, page_string, sources[0])
         else:
             output += " \\perscommpar{%s}" % page_string
     if latex_labels and pex:
         output += r"\exl{%s}" % (pextag)
     # beamer for some reason wants a line break after \pex, but absolutely
     # not after \ex; text documents want the opposite
-    if (for_beamer and pex) or (
-        not for_beamer and not pex and language_string != ""
-    ):
+    if (for_beamer and pex) or (not for_beamer and not pex and language_string != ""):
         output += "\\\\"
     # If we're dealing with subexamples, we need a linebreak before the \a
     if pex:
@@ -446,7 +444,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
     def get_running_number_tables(document):
         for i in range(1, len(document.tables) + 1):
             topright = document.tables[-i].rows[0].cells[0].text
-            search = re.search("\((.*)\)", topright)
+            search = re.search("\\((.*)\\)", topright)
             if search:
                 return int(search.group(1))
         return 0
@@ -454,7 +452,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
     def get_running_number_tabs(document):
         for i in range(1, len(document.paragraphs) + 1):
             partext = document.paragraphs[-i].text
-            search = re.search("\((.*)\)", partext)
+            search = re.search("\\((.*)\\)", partext)
             if search:
                 return int(search.group(1))
         return 0
@@ -473,7 +471,6 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
         xs = 1
         if len(examples) > 1:
             xs += 1
-        max_length = 0
         exhe = 3
         for exno, example in enumerate(examples):
             obj_words = example["obj"].split(" ")
