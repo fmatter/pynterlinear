@@ -4,7 +4,7 @@ import os
 import re
 from docx import Document
 from docx import shared
-
+from docx.enum.section import WD_ORIENT
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -419,7 +419,7 @@ def convert_to_expex(
     return output
 
 
-def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
+def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", overwrite=False, sep="\\t", numbering_mode="single"):
     def get_running_number_tables(document):
         for i in range(1, len(document.tables) + 1):
             topright = document.tables[-i].rows[0].cells[0].text
@@ -436,7 +436,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                 return int(search.group(1))
         return 0
 
-    if filename in os.listdir("."):
+    if filename in os.listdir(".") and not overwrite:
         document = Document(filename)
         if use_tables:
             running_number = get_running_number_tables(document) + 1
@@ -444,20 +444,24 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
             running_number = get_running_number_tabs(document) + 1
     else:
         document = Document()
+        section = document.sections[-1]
+        new_width, new_height = section.page_height, section.page_width
+        section.orientation = WD_ORIENT.LANDSCAPE
+        section.page_width = new_width*2
+        section.page_height = new_height
         running_number = 1
 
     if use_tables:
         xs = 1
-        if len(examples) > 1:
+        if len(examples) > 1 and numbering_mode=="multipart":
             xs += 1
         exhe = 3
         for exno, example in enumerate(examples):
-            obj_words = example["obj"].split(" ")
-            gloss_words = example["gloss"].split(" ")
+            obj_words = example["obj"].split(sep)
+            gloss_words = example["gloss"].split(sep)
             trans = example["trans"]
             table = document.add_table(rows=exhe, cols=len(obj_words) + xs)
-            # Only for development purposes
-            # table.style = "Table Grid"
+            table.allow_autofit = True
             for i, obj_word in enumerate(obj_words):
                 table.rows[0].cells[i + xs].paragraphs[0].add_run(
                     obj_word
@@ -502,12 +506,13 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                     cell._tc.tcPr.tcW.type = "auto"
             transcell = table.rows[-1].cells[0 + xs].merge(table.rows[-1].cells[-1])
             transcell.text = f"‘{trans}’"
-            table.rows[0].cells[0].allow_autofit = False
-            table.rows[0].cells[0].width = shared.Cm(1)
-            if exno == 0:
-                table.rows[0].cells[0].text = f"({running_number})"
-            if len(examples) > 1:
-                table.rows[0].cells[1].text = f"{chr(97 + exno)}."
+            if numbering_mode=="multipart":
+                if exno == 0:
+                    table.rows[0].cells[0].text = f"({running_number})"
+                if len(examples) > 1:
+                    table.rows[0].cells[1].text = f"{chr(97 + exno)}."
+            else:
+                table.rows[0].cells[0].text = f"({exno+1})"
             # Remove random 10pt spacing in EVERY CELL
             for row in table.rows:
                 for cell in row.cells:
@@ -516,19 +521,24 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
             par = document.add_paragraph("")
             par.paragraph_format.space_after = shared.Pt(0)
     else:
-        gloss_para = document.add_paragraph(f"({running_number})")
+        if numbering_mode=="multipart":
+            gloss_para = document.add_paragraph(f"({running_number})")
         for exno, example in enumerate(examples):
-            if len(examples) > 1:
-                sub_ex_label = chr(97 + exno) + ".\t"
-                tabstops = [1, 2]
+            if numbering_mode=="multipart":
+                if len(examples) > 1:
+                    sub_ex_label = chr(97 + exno) + f".\t"
+                    tabstops = [1, 2]
+                else:
+                    sub_ex_label = ""
+                    tabstops = [1.25]
+                gloss_para.add_run(f"\t{sub_ex_label}")
             else:
-                sub_ex_label = ""
+                gloss_para = document.add_paragraph(f"({exno+1})\t")
                 tabstops = [1.25]
-            gloss_para.add_run(f"\t{sub_ex_label}")
-            mod_obj = example["obj"].replace(" ", "\t")
+            mod_obj = example["obj"].replace(sep, f"\t")
             obj_run = gloss_para.add_run(f"""{mod_obj}\n\t\t""")
             obj_run.italic = True
-            for i, gloss_word in enumerate(example["gloss"].split(" ")):
+            for i, gloss_word in enumerate(example["gloss"].split(sep)):
                 if (
                     len(gloss_word) == 2
                     and gloss_word[0] == gloss_word[0].upper()
@@ -548,13 +558,17 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx"):
                             add_text.font.small_caps = True
                         else:
                             add_text = gloss_para.add_run(morpheme)
-                if i < len(example["gloss"].split(" ")) - 1:
-                    gloss_para.add_run("\t")
+                if i < len(example["gloss"].split(sep)) - 1:
+                    gloss_para.add_run(f"\t")
             gloss_para.add_run(
                 f"""\n\t\t‘{example["trans"]}’"""
-            )  # , sub_example["source"]))
+            )
+            if "trans2" in example:
+                gloss_para.add_run(
+                f"""\n\t\t‘{example["trans2"]}’"""
+            )
             tab_stops = gloss_para.paragraph_format.tab_stops
             for tabstop in tabstops:
                 tab_stops.add_tab_stop(shared.Cm(tabstop))
-            gloss_para = document.add_paragraph()
+            # gloss_para = document.add_paragraph()
     document.save(filename)
