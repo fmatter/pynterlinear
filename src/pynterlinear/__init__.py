@@ -535,6 +535,8 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", 
             else:
                 gloss_para = document.add_paragraph(f"({exno+1})\t")
                 tabstops = [1.25]
+            if "surf" in example:
+                surf_run = gloss_para.add_run(f"""{example["surf"]}\n\t\t""")
             mod_obj = example["obj"].replace(sep, f"\t")
             obj_run = gloss_para.add_run(f"""{mod_obj}\n\t\t""")
             obj_run.italic = True
