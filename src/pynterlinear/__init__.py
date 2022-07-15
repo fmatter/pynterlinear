@@ -5,6 +5,8 @@ import re
 from docx import Document
 from docx import shared
 from docx.enum.section import WD_ORIENT
+from docx.enum.style import WD_STYLE_TYPE
+from pathlib import Path
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -42,6 +44,14 @@ with open(fn, "r", encoding="utf-8") as f:
     raw_glosses = f.read()
 for entry in raw_glosses.split("\n"):
     glossing_abbrevs[entry.split("\t")[0]] = entry.split("\t")[1]
+
+# custom ones
+if Path("glossing.txt").is_file():
+    fn = os.path.join(data_dir, "glossing.txt")
+    with open(fn, "r", encoding="utf-8") as f:
+        raw_glosses = f.read()
+    for entry in raw_glosses.split("\n"):
+        glossing_abbrevs[entry.split("\t")[0]] = entry.split("\t")[1]
 
 # This is used for keeping track of abbreviations that came up in the analysis
 # but which are not in glossing_abbrevs.
@@ -125,6 +135,7 @@ def split_word(word):
             output.append(char)
         else:
             output[-1] += char
+    print(output)
     return output
 
 
@@ -419,7 +430,20 @@ def convert_to_expex(
     return output
 
 
-def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", overwrite=False, sep="\\t", numbering_mode="single"):
+def convert_to_word(
+    examples,
+    mode="tables",
+    filename="csv2word_export.docx",
+    overwrite=False,
+    sep="\\t",
+    numbering_mode="single",
+    style_names={
+        "surf": "Surface",
+        "obj": "Object",
+        "gloss": "Gloss",
+        "trans": "Translation",
+    },
+):
     def get_running_number_tables(document):
         for i in range(1, len(document.tables) + 1):
             topright = document.tables[-i].rows[0].cells[0].text
@@ -438,7 +462,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", 
 
     if filename in os.listdir(".") and not overwrite:
         document = Document(filename)
-        if use_tables:
+        if mode == "tables":
             running_number = get_running_number_tables(document) + 1
         else:
             running_number = get_running_number_tabs(document) + 1
@@ -447,13 +471,18 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", 
         section = document.sections[-1]
         new_width, new_height = section.page_height, section.page_width
         section.orientation = WD_ORIENT.LANDSCAPE
-        section.page_width = new_width*2
+        section.page_width = new_width * 2
         section.page_height = new_height
         running_number = 1
+        styles = document.styles
+        surf_style = styles.add_style(style_names["surf"], WD_STYLE_TYPE.PARAGRAPH)
+        obj_style = styles.add_style(style_names["obj"], WD_STYLE_TYPE.PARAGRAPH)
+        gloss_style = styles.add_style(style_names["gloss"], WD_STYLE_TYPE.PARAGRAPH)
+        trans_style = styles.add_style(style_names["trans"], WD_STYLE_TYPE.PARAGRAPH)
 
-    if use_tables:
+    if mode == "tables":
         xs = 1
-        if len(examples) > 1 and numbering_mode=="multipart":
+        if len(examples) > 1 and numbering_mode == "multipart":
             xs += 1
         exhe = 3
         for exno, example in enumerate(examples):
@@ -506,7 +535,7 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", 
                     cell._tc.tcPr.tcW.type = "auto"
             transcell = table.rows[-1].cells[0 + xs].merge(table.rows[-1].cells[-1])
             transcell.text = f"‘{trans}’"
-            if numbering_mode=="multipart":
+            if numbering_mode == "multipart":
                 if exno == 0:
                     table.rows[0].cells[0].text = f"({running_number})"
                 if len(examples) > 1:
@@ -520,11 +549,11 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", 
                         par.paragraph_format.space_after = shared.Pt(0)
             par = document.add_paragraph("")
             par.paragraph_format.space_after = shared.Pt(0)
-    else:
-        if numbering_mode=="multipart":
+    elif mode == "tabs":
+        if numbering_mode == "multipart":
             gloss_para = document.add_paragraph(f"({running_number})")
         for exno, example in enumerate(examples):
-            if numbering_mode=="multipart":
+            if numbering_mode == "multipart":
                 if len(examples) > 1:
                     sub_ex_label = chr(97 + exno) + f".\t"
                     tabstops = [1, 2]
@@ -562,13 +591,67 @@ def convert_to_word(examples, use_tables=True, filename="csv2word_export.docx", 
                             add_text = gloss_para.add_run(morpheme)
                 if i < len(example["gloss"].split(sep)) - 1:
                     gloss_para.add_run(f"\t")
-            gloss_para.add_run(
-                f"""\n\t\t‘{example["trans"]}’"""
-            )
+            gloss_para.add_run(f"""\n\t\t‘{example["trans"]}’""")
             if "trans2" in example:
-                gloss_para.add_run(
-                f"""\n\t\t‘{example["trans2"]}’"""
-            )
+                gloss_para.add_run(f"""\n\t\t‘{example["trans2"]}’""")
+            tab_stops = gloss_para.paragraph_format.tab_stops
+            for tabstop in tabstops:
+                tab_stops.add_tab_stop(shared.Cm(tabstop))
+    elif mode == "tabs_paragraphs":
+        if numbering_mode == "multipart":
+            surf_para = document.add_paragraph()
+            surf_para.style = surf_style
+            surf_para.add_run(f"({running_number})")
+        for exno, example in enumerate(examples):
+            if numbering_mode == "multipart":
+                if len(examples) > 1:
+                    sub_ex_label = chr(97 + exno) + f".\t"
+                    tabstops = [1, 2]
+                else:
+                    sub_ex_label = ""
+                    tabstops = [1.25]
+                surf_para.add_run(f"\t{sub_ex_label}")
+            else:
+                surf_para = document.add_paragraph(f"({exno+1})\t")
+                tabstops = [1.25]
+            if "surf" in example:
+                surf_run = surf_para.add_run(f"""{example["surf"]}""")
+            obj_para = document.add_paragraph()
+            gloss_para = document.add_paragraph()
+            trans_para = document.add_paragraph()
+            obj_para.style = obj_style
+            gloss_para.style = gloss_style
+            trans_para.style = trans_style
+            mod_obj = example["obj"].replace(sep, f"\t")
+            obj_run = obj_para.add_run(f"""\t{mod_obj}""")
+            obj_run.italic = True
+            gloss_para.add_run(f"\t")
+            for i, gloss_word in enumerate(example["gloss"].split(sep)):
+                if (
+                    len(gloss_word) == 2
+                    and gloss_word[0] == gloss_word[0].upper()
+                    and gloss_word[1] == "."
+                ):
+                    add_text = gloss_para.add_run(gloss_word)
+                else:
+                    morphemes = split_word(gloss_word)
+                    for morpheme in morphemes:
+                        # take proper nouns into account
+                        if (
+                            morpheme == morpheme.upper()
+                            and morpheme not in delimiters
+                            and morpheme != "?"
+                        ):
+                            add_text = gloss_para.add_run(morpheme.lower())
+                            add_text.font.small_caps = True
+                        else:
+                            print(f"|{morpheme}|")
+                            add_text = gloss_para.add_run(morpheme)
+                if i < len(example["gloss"].split(sep)) - 1:
+                    gloss_para.add_run(f"\t")
+            trans_para.add_run(f"""\t‘{example["trans"]}’""")
+            if "trans2" in example:
+                trans_para.add_run(f"""\n\t‘{example["trans2"]}’""")
             tab_stops = gloss_para.paragraph_format.tab_stops
             for tabstop in tabstops:
                 tab_stops.add_tab_stop(shared.Cm(tabstop))
