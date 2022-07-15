@@ -2,11 +2,12 @@
 import logging
 import os
 import re
+from pathlib import Path
 from docx import Document
 from docx import shared
 from docx.enum.section import WD_ORIENT
 from docx.enum.style import WD_STYLE_TYPE
-from pathlib import Path
+
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
