@@ -136,7 +136,6 @@ def split_word(word):
             output.append(char)
         else:
             output[-1] += char
-    print(output)
     return output
 
 
@@ -646,7 +645,6 @@ def convert_to_word(
                             add_text = gloss_para.add_run(morpheme.lower())
                             add_text.font.small_caps = True
                         else:
-                            print(f"|{morpheme}|")
                             add_text = gloss_para.add_run(morpheme)
                 if i < len(example["gloss"].split(sep)) - 1:
                     gloss_para.add_run(f"\t")
